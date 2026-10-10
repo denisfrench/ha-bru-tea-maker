@@ -1,0 +1,116 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up a BRU tea maker",
+        "description": "Put the tea maker in **pairing mode**, then select it below.",
+        "data": {
+          "address": "Device"
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Set up {name}",
+        "description": "Do you want to set up **{name}**?\n\nPut the tea maker in **pairing mode** before you continue."
+      },
+      "reauth_confirm": {
+        "title": "Pair {name} again",
+        "description": "Home Assistant has no working pairing with **{name}**.\n\nPut the tea maker in **pairing mode** before you continue."
+      },
+      "confirm_code": {
+        "title": "Confirm the pairing code",
+        "description": "The tea maker should now be showing this code:\n\n## {code}\n\n1. Check that the code on the tea maker matches.\n2. Accept it **on the tea maker's screen**.\n3. Press **Submit** here."
+      }
+    },
+    "progress": {
+      "pairing": "Connecting to **{name}**…\n\nIf a 6-digit code appears on the tea maker's screen, accept it there.",
+      "waiting_for_device": "Waiting for the code to be accepted on **{name}**…"
+    },
+    "abort": {
+      "no_devices_found": "No unconfigured BRU tea makers found.",
+      "already_configured": "Device is already configured",
+      "already_in_progress": "Setup of this tea maker is already in progress.",
+      "cannot_connect": "The tea maker is not in Bluetooth range of Home Assistant.",
+      "pairing_failed": "Pairing failed.\n\nMake sure the tea maker is in **pairing mode** and that the code is accepted on its screen. After a failed attempt the tea maker refuses new ones for about five minutes.",
+      "reauth_successful": "The tea maker is paired again."
+    }
+  },
+  "entity": {
+    "button": {
+      "start_brew": {
+        "name": "Start brew"
+      },
+      "sync_presets": {
+        "name": "Sync presets"
+      }
+    },
+    "number": {
+      "temperature": {
+        "name": "Temperature"
+      },
+      "water_amount": {
+        "name": "Water amount"
+      },
+      "brew_time": {
+        "name": "Brew time"
+      }
+    },
+    "select": {
+      "preset": {
+        "name": "Preset"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "standby": "Standby",
+          "function_menu": "Ready",
+          "machine_setup": "In settings",
+          "brewing": "Brewing",
+          "dispensing": "Dispensing",
+          "alarm_timer": "Timer",
+          "cold_tea": "Cold tea",
+          "split_cup": "Split cup",
+          "multi_steeping": "Multi-steeping",
+          "info_message": "Showing a message",
+          "warning_message": "Showing a warning",
+          "error_message": "Error",
+          "hot_tea": "Hot tea",
+          "test_mode": "Test mode",
+          "drying": "Drying",
+          "descaling": "Descaling",
+          "lid_reminder": "Lid reminder",
+          "bluetooth_menu": "In Bluetooth menu",
+          "filling": "Filling",
+          "steeping": "Steeping",
+          "rinse_delay": "Waiting to rinse",
+          "serving": "Serving",
+          "rinsing": "Rinsing",
+          "enjoy": "Done",
+          "cold_water": "Adding cold water",
+          "hot_water": "Adding hot water"
+        }
+      },
+      "message": {
+        "name": "Message",
+        "state": {
+          "none": "None",
+          "place_cup": "Place cup",
+          "remove_cup": "Remove cup",
+          "close_lid": "Close lid",
+          "open_lid": "Open lid",
+          "add_water": "Add water",
+          "insert_chamber": "Insert chamber",
+          "no_nozzle": "Nozzle missing",
+          "error": "Error",
+          "continue": "Continue",
+          "cancel": "Cancel",
+          "next_cup": "Next cup",
+          "cup_removed": "Cup removed",
+          "place_descaling": "Place descaling container",
+          "check_engine": "Check engine"
+        }
+      }
+    }
+  }
+}
