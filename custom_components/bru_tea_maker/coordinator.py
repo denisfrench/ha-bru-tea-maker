@@ -44,6 +44,10 @@ _CONNECT_TIMEOUT = 90
 _ENCRYPT_TIMEOUT = 20
 # BRU answers within about 100 ms.
 _REPLY_TIMEOUT = 3
+# One slow or lost pairing attempt is not a missing bond: a link that drops
+# mid-attempt can cut one short. Only this many failures in a row are taken to
+# mean the bond is gone.
+_PAIR_FAILURES_BEFORE_REAUTH = 3
 
 type BruConfigEntry = ConfigEntry[BruCoordinator]
 
@@ -70,6 +74,7 @@ class BruCoordinator(DataUpdateCoordinator[BruStatus]):
         self._request_lock = asyncio.Lock()
         self._reply: tuple[int, asyncio.Future[bytes]] | None = None
         self._missed_poll = False
+        self._pair_failures = 0
 
     @callback
     def async_set_setting(self, key: str, value: int) -> None:
@@ -159,10 +164,17 @@ class BruCoordinator(DataUpdateCoordinator[BruStatus]):
         except (BleakError, TimeoutError) as err:
             if isinstance(err, BleakError) and not client.is_connected:
                 raise
+            await self._disconnect()
+            self._pair_failures += 1
+            if self._pair_failures < _PAIR_FAILURES_BEFORE_REAUTH:
+                raise UpdateFailed(
+                    f"Pairing attempt {self._pair_failures} failed: {err!r}"
+                ) from err
             # Retrying cannot fix a missing bond, and every failed attempt
             # makes BRU refuse new ones for about five minutes.
-            await self._disconnect()
+            self._pair_failures = 0
             raise ConfigEntryAuthFailed("The BRU tea maker is not paired") from err
+        self._pair_failures = 0
         async with asyncio.timeout(_ENCRYPT_TIMEOUT):
             await client.start_notify(STATUS_UUID, self._on_notify)
         try:
