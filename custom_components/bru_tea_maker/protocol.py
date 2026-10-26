@@ -24,6 +24,7 @@ OP_PRESET = 0x50
 _STATUS_FRAME_LENGTH = 10
 _SETUP_FRAME_LENGTH = 8
 _PRESET_FRAME_LENGTH = 56
+_PRESET_NAME_LENGTH = 48
 _PRESET_SLOTS = 10
 
 
@@ -66,8 +67,9 @@ def is_valid_frame(frame: bytes) -> bool:
     )
 
 
-def _payload(frame: bytes, length: int) -> bytes:
-    if len(frame) != length:
+def _payload(frame: bytes, length: int, *, exact: bool = True) -> bytes:
+    too_short = len(frame) < length
+    if too_short or (exact and len(frame) != length):
         raise ValueError(f"Unexpected reply: {frame.hex()}")
     return frame[3:-1]
 
@@ -113,11 +115,20 @@ def parse_preset_count(frame: bytes) -> int:
 
 
 def parse_preset(frame: bytes) -> BruPreset:
-    """Decode the reply to OP_PRESET."""
+    """Decode the reply to OP_PRESET.
+
+    Some firmware sends four extra bytes after the name field, so a longer
+    frame is accepted and only the name field is read.
+    """
     slot, brew_time, temperature, water_amount, *name = _payload(
-        frame, _PRESET_FRAME_LENGTH
+        frame, _PRESET_FRAME_LENGTH, exact=False
     )
-    text = bytes(name).decode("utf-16-le", errors="replace").split("\0", 1)[0].strip()
+    text = (
+        bytes(name[:_PRESET_NAME_LENGTH])
+        .decode("utf-16-le", errors="replace")
+        .split("\0", 1)[0]
+        .strip()
+    )
     return BruPreset(
         name=text or f"Preset {slot}",
         temperature=temperature * 5 + 40,
