@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     AWAKE_UPDATE_INTERVAL,
+    BREW_NAME,
     COMMAND_UUID,
     DEFAULT_SETTINGS,
     DOMAIN,
@@ -34,6 +35,7 @@ from .protocol import (
     parse_preset,
     parse_preset_count,
     parse_status,
+    start_accepted,
     start_brew_payload,
 )
 
@@ -94,10 +96,22 @@ class BruCoordinator(DataUpdateCoordinator[BruStatus]):
     async def async_start_brew(self) -> None:
         """Start a brew with the current settings."""
         try:
-            await self._request(OP_START_BREW, start_brew_payload(**self.settings))
-        except (BleakError, TimeoutError) as err:
+            try:
+                accepted = await self._start_brew(BREW_NAME)
+            except TimeoutError:
+                accepted = False
+            if not accepted:
+                # Older firmware refuses, or does not answer, the longer frame.
+                accepted = await self._start_brew(None)
+        except (BleakError, TimeoutError, ValueError) as err:
             raise HomeAssistantError(f"Could not start the brew: {err!r}") from err
+        if not accepted:
+            raise HomeAssistantError("The tea maker refused to start the brew")
         await self.async_request_refresh()
+
+    async def _start_brew(self, name: str | None) -> bool:
+        payload = start_brew_payload(**self.settings, name=name)
+        return start_accepted(await self._request(OP_START_BREW, payload))
 
     async def async_sync_presets(self) -> None:
         """Read the presets from the tea maker."""

@@ -26,6 +26,7 @@ _SETUP_FRAME_LENGTH = 8
 _PRESET_FRAME_LENGTH = 56
 _PRESET_NAME_LENGTH = 48
 _PRESET_SLOTS = 10
+_START_REPLY_FRAME_LENGTH = 5
 
 
 @dataclass(frozen=True)
@@ -74,9 +75,18 @@ def _payload(frame: bytes, length: int, *, exact: bool = True) -> bytes:
     return frame[3:-1]
 
 
-def start_brew_payload(temperature: int, water_amount: int, brew_time: int) -> bytes:
-    """Encode a brew of ``temperature`` °C, ``water_amount`` ml, ``brew_time`` s."""
-    return bytes(
+def start_brew_payload(
+    temperature: int, water_amount: int, brew_time: int, name: str | None = None
+) -> bytes:
+    """Encode a brew of ``temperature`` °C, ``water_amount`` ml, ``brew_time`` s.
+
+    The BRU app follows the parameters with an 8-byte initiator field, the
+    program name (48 bytes, UTF-16) and a 4-byte recipe field. A brew started
+    on the machine itself leaves the initiator all 0xFF, and a brew without a
+    recipe leaves the recipe all 0xFF. Without a ``name`` only the parameters
+    are sent, which is the layout older firmware takes.
+    """
+    parameters = bytes(
         [
             0,
             (temperature - 40) // 5,
@@ -91,6 +101,16 @@ def start_brew_payload(temperature: int, water_amount: int, brew_time: int) -> b
             0,
         ]
     )
+    if name is None:
+        return parameters
+    name_field = name.encode("utf-16-le")[:_PRESET_NAME_LENGTH]
+    name_field = name_field.ljust(_PRESET_NAME_LENGTH, b"\0")
+    return parameters + b"\xff" * 8 + name_field + b"\xff" * 4
+
+
+def start_accepted(frame: bytes) -> bool:
+    """Return whether BRU accepted a start command: its reply payload is 0."""
+    return _payload(frame, _START_REPLY_FRAME_LENGTH)[0] == 0
 
 
 def parse_status(frame: bytes) -> BruStatus:
